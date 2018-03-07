@@ -33,8 +33,10 @@ for k = 1:2
    S_1 = -2*M;              % Create constants for equations to reduce the number 
    S_2x = hx*M;             % of operations within the loop
    S_2y = hy*M;             % Constant in y
-   S_3x = hx*hx*0.25;       % multiply by .25 instead of divide (to better optomize) by 4 in x
-   S_3y = hy*hy*0.25;       % Same as above but in y  
+   S_3x = hx*hx;       % multiply by .25 instead of divide by 4 (to better optomize) in x
+   S_3y = hy*hy;       % Same as above but in y  
+   S_4 = -2*S_3x-2*S_3y; %Constant for if delta x and delta y are not the same
+   S_5=S_3x*S_3y;       %constant for f
     U = zeros(Nx+1,Ny+1);	% Create solution matix with initial guess of ZERO
     F = zeros(Nx+1,Ny+1);	% Create non homogeneous RHS vector
                             % Apply Dirichlet boundary conditions to solution matrix
@@ -49,7 +51,7 @@ for i = 2:Nx             % Create RHS vector for all interior U, i,j = 1,N+1 on 
         end
 end
 
-F = S_3x.*F;
+F = (S_5).*F;      %Not sure how to convert this into x and y, possibly need to multiply by hx and hy later on
 
 %Do twice to compare N and 2N
 
@@ -59,8 +61,8 @@ it = it + 1;                % Track the number of itterations with count
 Uold = U;                   % Must rewrite previous matrix so that can compare to new and determine error
 
 for i = 2:Nx                % Gauss - Seidel itteration 
-    for j = 2:Nx
-		U(i,j) = (0.25)*( U(i+1,j) + U(i-1,j) + U(i,j+1) + U(i,j-1) ) - F(i,j);
+    for j = 2:Ny
+		U(i,j) = (F(i,j)- S_3y.*U(i+1,j) -S_3y.* U(i-1,j) - S_3x.*U(i,j+1) - S_3x.*U(i,j-1) )/S_4;
 		iter_err(i,j) = abs( (U(i,j) - Uold(i,j)));
     end
 end
@@ -98,6 +100,6 @@ figure;
 plot(x,U2N(Nx/4+1,:),'o',x,U2Ne(Nx/4+1,:),'b',x,U2N(Nx/2+1,:),'+',x,U2Ne(Nx/2+1,:),'r',x,U2N(3*Nx/4+1,:),'*',x,U2Ne(3*Nx/4+1,:),'y');
 legend('U(x,\pi/4) approximate','U(x,\pi/4) exact','U(x,\pi/2) approximate','U(x,\pi/2) exact','U(x,3\pi/4) approximate','U(x,3\pi/4) exact');
 figure(2);
-y = linspace(0,pi,Nx+1);
-plot(U2N(Nx/4+1,:),y,'o',U2Ne(Nx/4+1,:),y,'b',U2N(Nx/2+1,:),y,'+',U2Ne(Nx/2+1,:),y,'r',U2N(3*Nx/4+1,:),y,'*',U2Ne(3*Nx/4+1,:),y,'y');
+y = linspace(0,pi,Ny+1);
+plot(U2N(Ny/4+1,:),y,'o',U2Ne(Ny/4+1,:),y,'b',U2N(Ny/2+1,:),y,'+',U2Ne(Ny/2+1,:),y,'r',U2N(3*Ny/4+1,:),y,'*',U2Ne(3*Ny/4+1,:),y,'y');
 legend('U(\pi/4,y) approximate','U(\pi/4,y) exact','U(\pi/2,y) approximate','U(\pi/2,y) exact','U(3\pi/4,y) approximate','U(3\pi/4,y) exact');
